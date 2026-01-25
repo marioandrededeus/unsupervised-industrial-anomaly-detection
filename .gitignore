@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Windows / OS
+Thumbs.db
+Desktop.ini
+
+# Data (do not version datasets)
+data/
+*.mat
+
+# Generated outputs
+figures/
