@@ -1,165 +1,132 @@
----
 
-# Industrial Anomaly Detection — Vibration Analysis
+---
+# Unsupervised Industrial Anomaly Detection on Bearing Vibration Data
 
 ## Overview
 
-This repository hosts an applied research project on **unsupervised anomaly detection for industrial vibration time-series data**.
+This repository presents a reproducible and industry-oriented study on unsupervised anomaly detection
+for vibration-based bearing fault monitoring using the Case Western Reserve University (CWRU) dataset.
 
-Inspired by recent academic work in industrial anomaly detection, the project investigates **how feature representation and modeling choices influence fault detectability**, with a strong emphasis on **time-domain and frequency-domain signal analysis**.
+The central question addressed in **Experiment A** is:
 
-Rather than benchmarking algorithms in isolation, the goal is to understand *why* and *when* faults become detectable in vibration data from real industrial systems.
+**Do bearing faults become more detectable when the data representation changes
+(time-domain → frequency-domain → combined), while keeping the anomaly detector fixed?**
 
----
+Inspired by the paper *“Anomaly Detection Methods for Industrial Applications: A Comparative Study”*
+(MDPI, Electronics, 2023), this work focuses on isolating the impact of **feature representation**
+rather than benchmarking multiple detection algorithms.
 
-## Motivation
-
-In many industrial applications, known mechanical faults do not always appear as clear outliers in raw sensor data. This often leads to the incorrect conclusion that an anomaly detection algorithm has failed.
-
-This project is built on a different hypothesis:
-
-> **In industrial vibration analysis, the primary bottleneck for anomaly detection is often the data representation, not the detection algorithm itself.**
-
-By systematically controlling the experimental setup, this repository explores how signal transformations—especially frequency-domain features—affect the ability of unsupervised models to detect bearing faults.
-
----
-
-## Dataset
-
-All experiments are conducted using the **Case Western Reserve University (CWRU) Bearing Dataset**, a widely used benchmark for vibration-based fault diagnosis.
-
-* Signals: bearing vibration measurements
-* Sampling rate: 12 kHz (baseline, aligned with most literature)
-* Conditions: healthy and multiple bearing fault types
-* Labels are used **only for evaluation**, not for training
+The core hypothesis is that **time-domain features alone may be insufficient to separate all fault
+conditions**, and that **frequency-domain and combined representations increase anomaly separability**
+— observable through improved score distributions and higher ROC-AUC / PR-AUC — even when using
+the same unsupervised detector.
 
 ---
 
-## Research Philosophy
+## Experiment A — Impact of Feature Representation
 
-This project follows a **research-oriented engineering approach**:
+### Research Question
 
-* Prefer **controlled experiments** over complex pipelines
-* Separate **representation effects** from **model effects**
-* Favor **physical interpretability** of features
-* Maintain **reproducibility and extensibility**
+Can the same unsupervised anomaly detector (Isolation Forest), trained exclusively on healthy data,
+achieve substantially different performance depending solely on the feature representation of
+vibration signals?
 
-The repository is intentionally designed to evolve through clearly defined experimental stages.
+### Hypothesis
 
----
-
-## Experiments
-
-### Experiment A — Feature Representation vs Fault Detectability (Current)
-
-**Research question:**
-How does feature representation affect the detectability of vibration-related faults when the anomaly detector is fixed?
-
-**Design:**
-
-* Fixed detector: Isolation Forest
-* Training data: healthy samples only
-* Variable: feature representation
-
-**Feature sets:**
-
-* **A — Time-domain features**
-  Statistical descriptors (RMS, kurtosis, crest factor, etc.)
-* **B — Frequency-domain features (FFT)**
-  Band power, spectral centroid, bandwidth, entropy
-* **C — Time + Frequency features**
-  Concatenation of A and B
-
-**Outcome:**
-Quantitative comparison of anomaly score separability and detection performance under identical modeling conditions.
+- Time-domain features alone may fail to clearly separate certain fault conditions, leading to
+  overlapping anomaly score distributions.
+- Frequency-domain features (FFT-based descriptors, spectral entropy, band energies) increase
+  fault separability by capturing spectral energy redistribution induced by bearing faults.
+- Combining time- and frequency-domain features results in a more compact and stable normal
+  operating manifold, enabling higher anomaly detectability under conservative thresholds.
 
 ---
 
-### Experiment B — Model Comparison Under Fixed Representation (Planned)
+## Experimental Design
 
-**Research question:**
-How do different unsupervised modeling paradigms behave when the feature representation is held constant?
-
-**Planned models:**
-
-* Isolation Forest
-* Dense Autoencoder
-* LSTM / GRU Autoencoder
-
-**Focus:**
-
-* Structural outliers vs reconstruction-based anomalies
-* Sensitivity to noise and degradation patterns
-* Stability of anomaly scores
+**Key design principles**
+- Model trained exclusively on healthy data
+- Group-aware splits (by signal/file) to prevent data leakage
+- Identical model hyperparameters across all conditions
+- Thresholds derived only from healthy validation data
 
 ---
 
-### Experiment C — Generalization Under Operating Regime Shift (Planned)
+## Pipeline Summary
 
-**Research question:**
-How robust are anomaly detection models when trained under one operating condition and evaluated under another?
+1. **Data ingestion and validation**
+   - Raw vibration signals from the CWRU dataset
+   - Semantic and statistical validation of healthy vs faulty conditions
 
-**Planned analysis:**
+2. **Windowing**
+   - Sliding windows (2048 samples, 50% overlap)
+   - Window-level sanity checks and signal statistics
 
-* Train on one load/speed condition
-* Test on different operating regimes
-* Measure false alarms, detection delay, and score drift
+3. **Feature engineering**
+   - **A — Time-domain:** RMS, kurtosis, skewness, crest factor
+   - **B — Frequency-domain:** spectral centroid, bandwidth, entropy, band energies
+   - **C — Combined:** time + frequency features
 
-This experiment targets a key challenge in real industrial deployments.
+4. **Unsupervised modeling**
+   - Isolation Forest trained on healthy windows only
+   - Feature scaling fitted exclusively on healthy training data
 
----
-
-## Repository Structure
-
-```text
-industrial-anomaly-detection/
-├── experiments/
-│   ├── experiment_A/
-│   │   ├── README.md
-│   │   └── notebook.ipynb
-│   ├── experiment_B/
-│   └── experiment_C/
-├── src/
-│   ├── data/
-│   ├── windowing/
-│   ├── features/
-│   ├── models/
-│   └── evaluation/
-├── figures/
-├── requirements.txt
-└── README.md
-```
-
-Each experiment is self-contained while reusing shared components to ensure fair comparisons.
+5. **Evaluation**
+   - Threshold-free metrics (ROC-AUC, PR-AUC)
+   - Percentile-based thresholds (p99, p99.5)
+   - Precision, recall, and F1-score under operational constraints
 
 ---
 
-## Reproducibility
+## Key Findings
 
-* All preprocessing and models are fitted using **healthy data only**
-* Thresholds are calibrated on healthy validation data
-* Experiments are versioned using Git tags (e.g., `v0.1-experiment-A`)
-* Parameter choices are documented and aligned with existing literature
-
----
-
-## Scope and Limitations
-
-This repository focuses exclusively on **vibration-based anomaly detection**.
-It does not aim to provide a production-ready monitoring system, but rather a **transparent and extensible research baseline** for understanding unsupervised anomaly detection in mechanical systems.
+- Time-domain features provide a strong baseline but exhibit recall degradation under conservative
+  thresholds.
+- Frequency-domain features substantially improve anomaly ranking by capturing spectral energy
+  redistribution caused by bearing faults.
+- The combined feature representation delivers the most robust operational performance, maintaining
+  **precision, recall, and F1-score above 0.99** even under strict thresholds (p99.5).
+- Near-perfect AUC values are not indicative of overfitting, but instead reflect intrinsic
+  separability introduced by physically meaningful feature representations.
 
 ---
 
-## Final Note
+## Conclusion
 
-This project is intentionally incremental.
+Experiment A directly addressed the initial research question of whether anomaly detectability
+improves when the feature representation is changed while keeping the detector fixed.
+The results confirm the initial hypothesis: time-domain features alone are insufficient to robustly
+separate all fault conditions, whereas frequency-domain and combined representations significantly
+increase anomaly separability.
 
-Each experiment builds on the previous one, refining the understanding of:
+By combining energetic and spectral descriptors, the anomaly detector operates under strict
+false-positive control without sacrificing fault detectability. These findings align with and
+extend recent comparative studies in the literature, reinforcing the central role of feature
+engineering in industrial anomaly detection systems.
 
-* what makes faults detectable,
-* how signal representation shapes anomaly scores,
-* and how different unsupervised models behave under realistic industrial constraints.
+---
 
-Future extensions will prioritize **interpretability, robustness, and industrial relevance** over model complexity.
+## Practical Relevance
+
+- Supports deployment-oriented decisions in predictive maintenance systems
+- Enables stricter alarm policies without increasing the risk of missed faults
+- Demonstrates that feature engineering can dominate anomaly detection performance over model choice
+
+
+## Future Work
+
+- Extension to additional experimental conditions (Experiments B and C)
+- Sequential models (LSTM Autoencoders, Temporal CNNs)
+- Sensitivity analysis on window size and sampling rate
+- Validation on real industrial vibration datasets
+
+---
+
+## References
+
+- Case Western Reserve University Bearing Data Center  
+- *Anomaly Detection Methods for Industrial Applications: A Comparative Study*,  
+  MDPI Electronics, 2023  
+  https://www.mdpi.com/2079-9292/12/18/3971
 
 ---
