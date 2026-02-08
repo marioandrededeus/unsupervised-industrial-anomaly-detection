@@ -1,22 +1,63 @@
-# Python
-__pycache__/
-*.py[cod]
+####################################
+# Data (never version raw datasets)
+####################################
+data/external/
+data/processed/
 
-# Jupyter
+####################################
+# Experiment outputs / artifacts
+####################################
+experiments/**/figures/*.png
+experiments/**/figures/*.jpg
+experiments/**/figures/*.svg
+experiments/**/figures/*.pdf
+
+####################################
+# Model artifacts
+####################################
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+####################################
+# Notebooks
+####################################
 .ipynb_checkpoints/
 
-# Virtual environments
-.venv/
+####################################
+# Python
+####################################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.env
+.venv
 venv/
-env/
 
-# Windows / OS
+####################################
+# Logs & temp
+####################################
+*.log
+*.tmp
+.cache/
+
+####################################
+# OS-specific
+####################################
+# Windows
 Thumbs.db
+ehthumbs.db
 Desktop.ini
 
-# Data (do not version datasets)
-data/
-*.mat
+# macOS
+.DS_Store
 
-# Generated outputs
-figures/
+####################################
+# IDEs
+####################################
+.vscode/
+.idea/
